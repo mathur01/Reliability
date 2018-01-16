@@ -1,4 +1,8 @@
 
+# Custom written functions to assist with Reliability analyses
+
+# R.J. Marriott. 29 June 2016. (Version 2.0)
+
 ##################
 
 # Calculate probability of failure:
@@ -26,7 +30,7 @@ xmax <- function(x){
   # to replicate the Weibull++ plot format.
   # x is the max of x
   x.max <- ceiling(x/(10^(nchar(as.character(x))-1))) *
-    (10^(nchar(as.character(x))-1))
+                  (10^(nchar(as.character(x))-1))
   return(x.max)
 }
 
@@ -62,7 +66,7 @@ Weibull.2p.plot <- function(x,y){
   # x = time; y = median ranks.
   ticks    <- c(seq(0.01,0.09,0.01),(1:9)/10,seq(0.91,0.99,0.01))
   xticks <- round(exp(seq(0.1,log(xmax(max(x))),
-                          length.out=5)),0)
+                    length.out=5)),0)
   y.trans <- F0inv(y)
   plot(x,y.trans,xlim=c(exp(0.1),xmax(max(x))),
        ylim=F0inv(c(0.01,0.99)),log="x",axes=F)
@@ -77,7 +81,7 @@ Weibull.2p.plot <- function(x,y){
 
 failure.rate.w2p <- function(beta,eta,time){
   r <- (beta/eta) *
-    (time/eta)^(beta-1)
+        (time/eta)^(beta-1)
   return(r)
 }
 
@@ -228,7 +232,7 @@ Calculate.a_b <- function(reliability.data){
 
 Calculate.e_val <- function(ab.obj){
   a <- ab.obj$a; b <- ab.obj$b
-  # e_alpha is a global object created in this file (lookup table from Meeker & Escobar)
+# e_alpha is a global object created in this file (lookup table from Meeker & Escobar)
   (e_val <- e_alpha[e_alpha$a==e_alpha$a[which.min(abs(a - e_alpha$a))] &
                       e_alpha$b==e_alpha$b[which.min(abs(b - e_alpha$b))],
                     "cl_0.95"])
@@ -469,28 +473,28 @@ Probability.Plots <- function(reliability.data,gridlines=F,
   e_val <- Calculate.e_val(Calculate.a_b(dat))
   simult.CLs <- Calc.95.simultaneous.CI(dat,e_val=e_val) # $time, $lo, $hi
   if(dist=="All"){
-    par(mfrow=c(2,2), mar=c(3, 3, 1, 0.25) + 0.1,cex.axis=0.75,
-        oma=c(0,0,0,0),mgp=c(3,1,0),xpd=T,mai=c(0.75,0.75,0.2,0.2))
-    # Plot for Weibull distbn.
-    Weibull.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
+  par(mfrow=c(2,2), mar=c(3, 3, 1, 0.25) + 0.1,cex.axis=0.75,
+      oma=c(0,0,0,0),mgp=c(3,1,0),xpd=T,mai=c(0.75,0.75,0.2,0.2))
+  # Plot for Weibull distbn.
+  Weibull.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
+                           label.individual.axes)
+  add95CIs.Weibull(simult.CLs)
+  # Plot for Lognormal distbn.
+  Lognormal.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
                              label.individual.axes)
-    add95CIs.Weibull(simult.CLs)
-    # Plot for Lognormal distbn.
-    Lognormal.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
+  add95CIs.Lognormal(simult.CLs)
+  # Plot for Normal distbn.
+  Normal.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
+                          label.individual.axes)
+  points(simult.CLs$time,qnorm(simult.CLs$lo),pch="-",lwd=2,cex=1.2)
+  points(simult.CLs$time,qnorm(simult.CLs$hi),pch="-",lwd=2,cex=1.2)
+  # Plot for Exponential cdf.
+  Exponential.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
                                label.individual.axes)
-    add95CIs.Lognormal(simult.CLs)
-    # Plot for Normal distbn.
-    Normal.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
-                            label.individual.axes)
-    points(simult.CLs$time,qnorm(simult.CLs$lo),pch="-",lwd=2,cex=1.2)
-    points(simult.CLs$time,qnorm(simult.CLs$hi),pch="-",lwd=2,cex=1.2)
-    # Plot for Exponential cdf.
-    Exponential.probability.plot(Fhat$time,Fhat$Fhat,gridlines,
-                                 label.individual.axes)
-    add95CIs.Exponential(simult.CLs)
-    mtext("Time",side=1,line=-1.5,adj=0.5,outer=T,font=2)
-    mtext("Unreliability, F(t)=1-R(t)",side=2,line=-1.5,adj=0.5,
-          outer=T,font=2)
+  add95CIs.Exponential(simult.CLs)
+  mtext("Time",side=1,line=-1.5,adj=0.5,outer=T,font=2)
+  mtext("Unreliability, F(t)=1-R(t)",side=2,line=-1.5,adj=0.5,
+        outer=T,font=2)
   }
   else if(dist=="Weibull"){
     par(mar= c(5, 5, 4, 1) + 0.1,font.lab=2,cex.axis=0.8,cex.lab=1.1,
@@ -557,10 +561,10 @@ loglik.sev <- function(data,mu,sigma){
   t.lnorm <- (log(t)-mu)/sigma
   for(i in 1:nrow(data)){
     ll.vec[i] <- (delta[i] * log(1 / (sigma*t[i]))) +
-      (delta[i] * 
-         log(sev.pdf(t.lnorm[i]))) +
-      ((1-delta[i]) * 
-         log(1 - sev.cdf(t.lnorm[i])))
+                 (delta[i] * 
+                    log(sev.pdf(t.lnorm[i]))) +
+                 ((1-delta[i]) * 
+                    log(1 - sev.cdf(t.lnorm[i])))
   }
   loglik <- sum(ll.vec)
   return(loglik)
@@ -616,79 +620,79 @@ Weibull.Confidence.Region <- function(data,model,probability,
   if(html=="Yes"){ # this right align is not consistent for html generation.
     title.settings <- list(
       par.main.text = list(font = 2,
-                           just = "right", 
-                           x = grid::unit(170, "mm")))
+                          just = "right", 
+                          x = grid::unit(170, "mm")))
   } else{ # Use default settings.
     title.settings <- list(par.main.text=trellis.par.get("par.main.text"))
   }
   contourplot(z ~ Eta * Beta, data=Contour.df,
-              at = probability, labels=label.show,
-              panel=function(data, ...){
-                panel.contourplot(...)
-                panel.points(x=eta.MLE,y=beta.MLE,pch=19,col='black')
-              },
-              par.settings=title.settings,
-              main=title)
+                      at = probability, labels=label.show,
+                      panel=function(data, ...){
+                        panel.contourplot(...)
+                        panel.points(x=eta.MLE,y=beta.MLE,pch=19,col='black')
+                      },
+                      par.settings=title.settings,
+                      main=title)
 }
 
 ###########
 
 # Some functions used for internal referencing in R markdown:
 # chunkref <- local({
-# function(chunklabel) {
-# sprintf('[%s](#%s)', chunklabel, chunklabel )
-# }  
+  # function(chunklabel) {
+    # sprintf('[%s](#%s)', chunklabel, chunklabel )
+  # }  
 # })
 
 # secref <- local({
-# function(seclabel) {
-# sprintf('[%s](#%s)', seclabel, seclabel )
-# }  
+  # function(seclabel) {
+    # sprintf('[%s](#%s)', seclabel, seclabel )
+  # }  
 # })
 
 # pgref <- local({
-# function(n)
-# sprintf('[Page-%i](#Page-%i)', n, n)
+  # function(n)
+    # sprintf('[Page-%i](#Page-%i)', n, n)
 # })
 
 # sec <- local({
-# function(seclabel) {
-# sprintf('# <a name="%s"/> %s', seclabel, seclabel )
-# }  
+  # function(seclabel) {
+    # sprintf('# <a name="%s"/> %s', seclabel, seclabel )
+  # }  
 # })
 
 # pgcount <- local({
-# pg <- 0
-# function(inc=T) {
-# if( inc ) { pg <<- pg + 1 }
-# return( pg )
-# }
+  # pg <- 0
+  # function(inc=T) {
+    # if( inc ) { pg <<- pg + 1 }
+    # return( pg )
+  # }
 # })
 
 # pganchor <- local({
-# function(doLabel=T) {
-# if( doLabel) {
-# sprintf('\n-----\nPage-%i\n<a name="Page-%i"/>\n', pgcount(inc=F), pgcount() )
-# } else {
-# sprintf('\n<a name="Page-%i"/>\n', pgcount() )
-# }
-# }
+  # function(doLabel=T) {
+    # if( doLabel) {
+      # sprintf('\n-----\nPage-%i\n<a name="Page-%i"/>\n', pgcount(inc=F), pgcount() )
+    # } else {
+      # sprintf('\n<a name="Page-%i"/>\n', pgcount() )
+    # }
+  # }
 # })
 
 # knit_hooks$set( anchor = function(before, options, envir) {
-# if ( before ) {
-# sprintf('<a name="%s"/>\n', options$label )
-# }
+  # if ( before ) {
+    # sprintf('<a name="%s"/>\n', options$label )
+  # }
 # })
 
 # knit_hooks$set( echo.label = function(before, options, envir) {
-# if ( before ) {
-# sprintf('> %s', options$label )
-# }
+  # if ( before ) {
+    # sprintf('> %s', options$label )
+  # }
 # })
 
 # knit_hooks$set( pgbreak = function(before, options, envir) {
-# if ( !before ) {
-# pganchor();
-# }
+  # if ( !before ) {
+    # pganchor();
+  # }
 # })
