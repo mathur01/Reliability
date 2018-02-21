@@ -1,10 +1,6 @@
-
 # Custom written functions to assist with Reliability analyses
-
 # R.J. Marriott. 29 June 2016. (Version 2.0)
-
 ##################
-
 # Calculate probability of failure:
 
 Calc.Unreliability.w2p <- function(beta,eta,time){
